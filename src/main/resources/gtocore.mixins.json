@@ -184,6 +184,7 @@
     "gtm.machine.SimpleGeneratorMachineMixin",
     "gtm.machine.SimpleTieredMachineMixin",
     "gtm.machine.WorkableElectricMultiblockMachineMixin",
+    "gtm.machine.trait.CircuitHandlerStorageMixin",
     "gtm.machine.WorkableMultiblockMachineMixin",
     "gtm.machine.WorkableTieredMachineMixin",
     "gtm.map.OreVeinElementRendererMixin",
