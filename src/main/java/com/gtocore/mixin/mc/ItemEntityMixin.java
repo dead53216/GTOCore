@@ -101,13 +101,20 @@ public abstract class ItemEntityMixin extends Entity {
 
     @Inject(method = "setItem", at = @At("HEAD"), cancellable = true)
     private void handleSetEmpty(ItemStack item, CallbackInfo ci) {
-        if (gtocore$discardedTick) {
-            ci.cancel();
-            return;
-        }
         if (item != ItemStack.EMPTY && !item.is(Items.AIR)) return;
         var self = gtocore$getThis();
-        if (StxckUtil.getExtraItemCount(self) <= 0) return;
+        if (StxckUtil.getExtraItemCount(self) <= 0) {
+            // No buffer left: keep swallowing our own post-discard re-entry within the tick.
+            if (gtocore$discardedTick) ci.cancel();
+            return;
+        }
+        // A consumer is clearing the visible stack while an extra buffer remains. Vanilla playerTouch
+        // has already shrunk its stack to empty, but external pickups (e.g. backpack magnets) take the
+        // visible group by inserting it elsewhere and then call setItem(EMPTY) with the group still
+        // present. Consume exactly that one visible group here and let the per-tick refill pull the
+        // next group from the buffer, so every pickup path debits one group and none can duplicate.
+        // Must NOT short-circuit on gtocore$discardedTick: a magnet pickup landing in the same tick as
+        // a vanilla pickup would otherwise be cancelled after already inserting the group -> dupe.
         var copied = self.getItem().copy();
         if (!copied.isEmpty()) {
             self.setItem(copied);
